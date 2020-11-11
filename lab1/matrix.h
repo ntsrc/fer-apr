@@ -13,8 +13,9 @@ namespace apr
 
 class matrix
 {
+	
 public:
-	using value_tape = double;
+	using value_type = double;
 	using size_type = std::vector<value_type>::size_type;
 
 	constexpr static value_type eps = 1e-6;
@@ -40,9 +41,12 @@ public:
 	~matrix() = default;
 
 	auto rows() const
-	{ return row; }
+	{ return rows_; }
 	auto columns() const
-	{ return col; }
+	{ return cols_; }
+
+	auto idx(size_type row, size_type col) const
+	{return row * rows_ + col; }
 
 	auto operator()(size_type row, size_type col) const
 	{ return elem_[idx(row, col)]; }
@@ -69,13 +73,10 @@ public:
 private:
 	size_type rows_, cols_;
 	std::vector<value_type> elem_;
-
-	auto idx(size_type row, size_type col) const
-	{ return row * cols_ + col; }
 };
 
 inline bool operator==(const matrix &m1, const matrix &m2)
-{ return m1.rows_ == m2.rows_ && m1.cols_ == m2.col_ &&
+{ return m1.rows_ == m2.rows_ && m1.cols_ == m2.cols_ &&
 	std::equal(m1.elem_.cbegin(), m1.elem_.cend(), m2.elem_.cbegin(), 
 	[](auto e1, auto e2){ return std::abs(e1 - e2) < matrix::eps; }); }
 inline bool operator!=(const matrix &m1, const matrix &m2)

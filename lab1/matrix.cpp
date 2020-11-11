@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <functional>
+#include <iterator>
 
 namespace apr
 {
@@ -14,7 +15,7 @@ matrix::matrix(const char *fn)
 		throw std::runtime_error("file error");
 
 	std::string line;
-	ifs = std::getline(ifs, line);
+	std::getline(ifs, line);
 	std::istringstream iss(line);
 
 	std::istream_iterator<value_type> beg(iss), end;
@@ -32,20 +33,20 @@ matrix::matrix(const char *fn)
 }
 
 
-value_type matrix::at(size_type row, size_type col) const
+matrix::value_type matrix::at(size_type row, size_type col) const
 {
 	if (row < 0 || row >= rows_ || col < 0 || col >= cols_)
 		throw std::runtime_error("invalid element");
 
-	return elem[idx(row, col)];
+	return elem_[idx(row, col)];
 }
 
-value_type &matrix::at(size_type row, size_type col)
+matrix::value_type &matrix::at(size_type row, size_type col)
 {
 	if (row < 0 || row >= rows_ || col < 0 || col >= cols_)
 		throw std::runtime_error("invalid element");
 
-	return elem[idx(row, col)];
+	return elem_[idx(row, col)];
 }
 
 matrix &matrix::operator+=(const matrix &m)
@@ -90,9 +91,9 @@ matrix &matrix::operator*=(const matrix &m)
 	return *this;
 }
 
-auto &matrix::operator*=(value_type v)
+matrix &matrix::operator*=(value_type v)
 {
-	std::transform(elem_.begin(), elem_.end(), elem_.begin(), [s](auto e){ return e * s; })
+	std::transform(elem_.begin(), elem_.end(), elem_.begin(), [v](auto e){ return e * v; });
 
 	return *this;
 }
@@ -226,7 +227,7 @@ matrix::value_type determinant(const matrix &m)
 
 	auto det_U = 1.0;
 	for (auto i = 0; i != LUP.rows(); ++i)
-		det_U *= LUP.(i,i);
+		det_U *= LUP(i,i);
 
 	return det_P * det_U;
 }
