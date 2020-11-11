@@ -1,1 +1,1 @@
-# fer-apr
+# FER - Computer Aided Analysis and Design
