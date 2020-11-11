@@ -44,13 +44,13 @@ public:
 	auto columns() const
 	{ return col; }
 
-	double operator()(size_type row, size_type col) const
+	auto operator()(size_type row, size_type col) const
 	{ return elem_[idx(row, col)]; }
-	double &operator()(size_type row, size_type col)
+	auto &operator()(size_type row, size_type col)
 	{ return elem_[idx(row, col)]; }
 
-	double at(size_type, size_type) const;
-	double &at(size_type, size_type);
+	value_type at(size_type, size_type) const;
+	value_type &at(size_type, size_type);
 
 	matrix &operator+=(const matrix &);
 	matrix &operator-=(const matrix &);
@@ -63,7 +63,8 @@ public:
 	matrix LUP_decomposition();
 
 	void print_to_file(const char *) const;
-	void print_to_file(const std::string &) const;
+	void print_to_file(const std::string &fn) const
+	{ print_to_file(fn.c_str()); }
 
 private:
 	size_type rows_, cols_;

@@ -7,9 +7,9 @@
 namespace apr
 {
 
-matrix::matrix(const char *filename)
+matrix::matrix(const char *fn)
 {
-	std::ifstream ifs(filename);
+	std::ifstream ifs(fn);
 	if (!ifs)
 		throw std::runtime_error("file error");
 
@@ -32,7 +32,7 @@ matrix::matrix(const char *filename)
 }
 
 
-auto matrix::at(size_type row, size_type col) const
+value_type matrix::at(size_type row, size_type col) const
 {
 	if (row < 0 || row >= rows_ || col < 0 || col >= cols_)
 		throw std::runtime_error("invalid element");
@@ -40,7 +40,7 @@ auto matrix::at(size_type row, size_type col) const
 	return elem[idx(row, col)];
 }
 
-auto &matrix::at(size_type row, size_type col)
+value_type &matrix::at(size_type row, size_type col)
 {
 	if (row < 0 || row >= rows_ || col < 0 || col >= cols_)
 		throw std::runtime_error("invalid element");
@@ -116,229 +116,207 @@ void matrix::LU_decomposition()
 	}
 }
 
-Matrix Matrix::LUP_decomposition()
+matrix matrix::LUP_decomposition()
 {
-	if (row != col)
+	if (rows_ != cols_)
 		throw std::runtime_error("non-square matrix");
 
-	std::vector<unsigned> Pv(row);
-	for (int i = 0; i < row; ++i)
+	std::vector<size_type> Pv(rows_);
+	for (auto i = 0; i != rows_; ++i)
 		Pv[i] = i;
 
-	for (int k = 0; k < row-1; ++k) {
-		double pivot = 0;
-		int l = k;
+	for (auto k = 0; k != rows_ - 1; ++k)
+	{
+		auto pivot = 0.0;
+		auto l = k;
 
-		for (int i = k; i < row; ++i) {
-			if (std::abs(elem[i*col+k]) > pivot) {
-				pivot = std::abs(elem[i*col+k]);
+		for (auto i = k; i != rows_; ++i)
+		{
+			if (std::abs(elem_[idx(i, k)]) > pivot)
+			{
+				pivot = std::abs(elem_[idx(i, k)]);
 				l = i;
 			}
 		}
 
-		if (pivot < EPSILON)
+		if (pivot < eps)
 			throw std::runtime_error("singular matrix");
 
 		std::swap(Pv[k], Pv[l]);
 
-		for (int j = 0; j < row; ++j)
-			std::swap(elem[k*col+j], elem[l*col+j]);
+		for (auto j = 0; j != rows_; ++j)
+			std::swap(elem_[idx(k, j)], elem_[idx(l, j)]);
 
-		for (int i = k+1; i < row; ++i) {
-			elem[i*col+k] /= elem[k*col+k];
-			for (int j = k+1; j < row; ++j)
-				elem[i*col+j] -= elem[i*col+k]*elem[k*col+j];
+		for (int i = k + 1; i != rows_; ++i)
+		{
+			elem_[idx(i, k)] /= elem_[idx(k, k)];
+			for (auto j = k + 1; j != rows_; ++j)
+				elem_[idx(i, j)] -= elem_[idx(i, k)] * elem_[idx(k, j)];
 		}
 	}
 
-	Matrix P(row);
-	for (int i = 0; i < row; ++i) {
-		P(i, Pv[i]) = 1;
+	matrix P(rows_);
+	for (auto i = 0; i != rows_; ++i) {
+		P(i, Pv[i]) = 1.0;
 	}
 
 	return P;
 }
 
-void Matrix::print_to_file(const std::string& filename) const
+void matrix::print_to_file(const char *fn) const
 {
-	std::ofstream ofs(filename);
+	std::ofstream ofs(fn);
 	if (!ofs)
 		throw std::runtime_error("file error");
 
 	ofs << *this;
 }
 
-bool operator==(const Matrix& m1, const Matrix& m2)
+matrix operator~(const matrix &m)
 {
-	if (&m1 == &m2)
-		return true;
+	matrix trans(m.columns(), m.rows());
 
-	if (m1.rows() != m2.rows() || m1.columns() != m2.columns())
-		return false;
-
-	for (int i = 0; i < m1.rows(); ++i)
-		for (int j = 0; j < m1.columns(); ++j)
-			if (std::abs(m1(i,j) - m2(i,j)) > EPSILON)
-				return false;
-
-	return true;
-}
-
-Matrix operator~(const Matrix& m)
-{
-	Matrix trans(m.columns(), m.rows());
-
-	for (int i = 0; i < trans.rows(); ++i)
-		for (int j = 0; j < trans.columns(); ++j)
+	for (auto i = 0; i != trans.rows(); ++i)
+		for (auto j = 0; j != trans.columns(); ++j)
 			trans(i,j) = m(j,i);
 
 	return trans;
 }
 
-Matrix operator!(const Matrix& m)
+matrix operator!(const matrix &m)
 {
 	if (m.rows() != m.columns())
 		throw std::runtime_error("singular matrix");
 
-	Matrix inverse(m.rows());
+	matrix inverse(m.rows());
 
-	std::pair<Matrix, Matrix> LUP_P = LUP_decomposition(m);
+	auto [LUP, P] = LUP_decomposition(m);
 
-	for (int i = 0; i < m.columns(); ++i) {
-		Matrix b(m.rows(), 1);
+	for (auto i = 0; i != m.columns(); ++i)
+	{
+		matrix b(m.rows(), 1);
 		
-		for (int j = 0; j < b.rows(); ++j)
-			b(j,0) = LUP_P.second(j,i);
+		for (auto j = 0; j != b.rows(); ++j)
+			b(j, 0) = P(j, i);
 
-		Matrix y = forward_supstitution(LUP_P.first, b);
-		Matrix x = backward_supstitution(LUP_P.first, y);
+		matrix y = forward_supstitution(LUP, b);
+		matrix x = backward_supstitution(LUP, y);
 
-		for (int j = 0; j < inverse.rows(); ++j) {
-			inverse(j,i) = x(j,0);
-		}
+		for (auto j = 0; j != inverse.rows(); ++j)
+			inverse(j, i) = x(j, 0);
+		
 	}
 
 	return inverse;
 }
 
-double determinant(const Matrix& m)
+matrix::value_type determinant(const matrix &m)
 {
 	if (m.rows() != m.columns())
 		throw std::runtime_error("non-square matrix");
 
-	std::pair<Matrix,Matrix> LUP_P = LUP_decomposition(m);
+	auto [LUP, P] = LUP_decomposition(m);
 
-	int n = 0;
-	for (int i = 0; i < LUP_P.second.rows(); ++i)
-		if (std::abs(LUP_P.second(i,i)) > EPSILON)
+	auto n = 0;
+	for (auto i = 0; i != P.rows(); ++i)
+		if (std::abs(P(i,i)) > matrix::eps)
 			++n;
 
-	int det_P = n % 2 == 0 ? 1 : -1;
+	auto det_P = n % 2 == 0 ? 1 : -1;
 
-	double det_U = LUP_P.first(0,0);
-	for (int i = 1; i < LUP_P.first.rows(); ++i)
-		det_U *= LUP_P.first(i,i);
+	auto det_U = 1.0;
+	for (auto i = 0; i != LUP.rows(); ++i)
+		det_U *= LUP.(i,i);
 
-	return det_P*det_U;
+	return det_P * det_U;
 }
 
-Matrix operator+(const Matrix& m1, const Matrix& m2)
+matrix operator+(const matrix &m1, const matrix &m2)
 {
-	Matrix sum = m1;
+	matrix sum = m1;
 
 	return sum += m2;
 }
 
-Matrix operator-(const Matrix& m1, const Matrix& m2)
+matrix operator-(const matrix &m1, const matrix &m2)
 {
-	Matrix dif = m1;
+	matrix dif = m1;
 
 	return dif -= m2;
 }
 
-Matrix operator*(const Matrix& m1, const Matrix& m2)
+matrix operator*(const matrix &m1, const matrix &m2)
 {
-	Matrix prod = m1;
+	matrix prod = m1;
 
 	return prod *= m2;
 }
 
-Matrix operator*(double s, const Matrix& m)
+matrix operator*(double v, const matrix &m)
 {
-	Matrix scaled = m;
+	matrix scaled = m;
 
-	return scaled *= s;
+	return scaled *= v;
 }
 
-Matrix operator*(const Matrix& m, double s)
+matrix LU_decomposition(const matrix& m)
 {
-	return s*m;
-}
-
-Matrix operator-(const Matrix& m)
-{
-	return -1*m;
-}
-
-Matrix LU_decomposition(const Matrix& m)
-{
-	Matrix LU = m;
+	matrix LU = m;
 
 	LU.LU_decomposition();
 
 	return LU;
 }
 
-std::pair<Matrix,Matrix> LUP_decomposition(const Matrix& m)
+std::pair<matrix, matrix> LUP_decomposition(const matrix &m)
 {
-	Matrix LUP = m;
+	matrix LUP = m;
 
-	Matrix P = LUP.LUP_decomposition();
+	matrix P = LUP.LUP_decomposition();
 
 	return std::make_pair(LUP, P);
 }
 
-Matrix forward_supstitution(const Matrix& L, const Matrix& b)
+matrix forward_supstitution(const matrix &L, const matrix &b)
 {
 	if (L.rows() != L.columns() || L.columns() != b.rows() || b.columns() != 1)
 		throw std::runtime_error("forward supstitution error");
 
-	Matrix y = b;
+	matrix y = b;
 
-	for (int i = 0; i < y.rows()-1; ++i)
-		for (int j = i+1; j < y.rows(); ++j)
-			y(j,0) -= L(j,i)*y(i,0);
+	for (auto i = 0; i != y.rows() - 1; ++i)
+		for (auto j = i + 1; j != y.rows(); ++j)
+			y(j, 0) -= L(j, i) * y(i, 0);
 
 	return y;
 }
 
-Matrix backward_supstitution(const Matrix& U, const Matrix& y)
+matrix backward_supstitution(const matrix &U, const matrix &y)
 {
 	if (U.rows() != U.columns() || U.columns() != y.rows() || y.columns() != 1)
 		throw std::runtime_error("backward supstitution error");
 
-	Matrix x = y;
+	matrix x = y;
 
-	for (int i = x.rows()-1; i >= 0; --i) {
-		if (std::abs(U(i,i)) < EPSILON)
+	for (auto i = x.rows() - 1; i >= 0; --i)
+	{
+		if (std::abs(U(i,i)) < matrix::eps)
 			throw std::runtime_error("backward supstitution error");
 
-		x(i,0) /= U(i,i);
-		for (int j = 0; j < i; ++j)
-			x(j,0) -= U(j,i)*x(i,0);
+		x(i, 0) /= U(i, i);
+		for (auto j = 0; j != i; ++j)
+			x(j, 0) -= U(j, i) * x(i, 0);
 	}
 
 	return x;
 }
 
-std::ostream& operator<<(std::ostream& os, const Matrix& m)
+std::ostream &operator<<(std::ostream& os, const matrix &m)
 {
-	os << '\n';
-
-	for (int i = 0; i < m.rows(); ++i) {
-		os << m(i,0);
-		for (int j = 1; j < m.columns(); ++j)
-			os << ' ' << m(i,j);
+	for (auto i = 0; i != m.rows(); ++i) {
+		os << m(i, 0);
+		for (auto j = 1; j != m.columns(); ++j)
+			os << ' ' << m(i, j);
 		os << '\n';
 	}
 
