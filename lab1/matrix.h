@@ -105,7 +105,7 @@ std::pair<matrix, matrix> LUP_decomposition(const matrix &);
 matrix forward_supstitution(const matrix &, const matrix &);
 matrix backward_supstitution(const matrix &, const matrix &);
 
-std::ostream &operator<<(std::ostream &, const matrix& m);
+std::ostream &operator<<(std::ostream &, const matrix &);
 
 }
 
