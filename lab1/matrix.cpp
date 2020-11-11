@@ -77,13 +77,9 @@ matrix &matrix::operator*=(const matrix &m)
 	std::vector<value_type> new_elem(rows_ * m.cols_);
 
 	for (auto i = 0; i != rows_; ++i)
-	{
 		for (auto j = 0; j != m.cols_; ++j)
-		{
 			for (auto k = 0; k != cols_; ++k)
 				new_elem[idx(i, j)] += elem_[idx(i, k)] * m.elem_[idx(k, j)];
-		}
-	}
 
 	cols_ = m.cols_;
 	elem_ = new_elem;
@@ -200,8 +196,8 @@ matrix operator!(const matrix &m)
 		for (auto j = 0; j != b.rows(); ++j)
 			b(j, 0) = P(j, i);
 
-		matrix y = forward_supstitution(LUP, b);
-		matrix x = backward_supstitution(LUP, y);
+		auto y = forward_supstitution(LUP, b);
+		auto x = backward_supstitution(LUP, y);
 
 		for (auto j = 0; j != inverse.rows(); ++j)
 			inverse(j, i) = x(j, 0);
@@ -234,35 +230,35 @@ matrix::value_type determinant(const matrix &m)
 
 matrix operator+(const matrix &m1, const matrix &m2)
 {
-	matrix sum = m1;
+	auto sum = m1;
 
 	return sum += m2;
 }
 
 matrix operator-(const matrix &m1, const matrix &m2)
 {
-	matrix dif = m1;
+	auto dif = m1;
 
 	return dif -= m2;
 }
 
 matrix operator*(const matrix &m1, const matrix &m2)
 {
-	matrix prod = m1;
+	auto prod = m1;
 
 	return prod *= m2;
 }
 
 matrix operator*(double v, const matrix &m)
 {
-	matrix scaled = m;
+	auto scaled = m;
 
 	return scaled *= v;
 }
 
 matrix LU_decomposition(const matrix& m)
 {
-	matrix LU = m;
+	auto LU = m;
 
 	LU.LU_decomposition();
 
@@ -271,9 +267,9 @@ matrix LU_decomposition(const matrix& m)
 
 std::pair<matrix, matrix> LUP_decomposition(const matrix &m)
 {
-	matrix LUP = m;
+	auto LUP = m;
 
-	matrix P = LUP.LUP_decomposition();
+	auto P = LUP.LUP_decomposition();
 
 	return std::make_pair(LUP, P);
 }
@@ -283,7 +279,7 @@ matrix forward_supstitution(const matrix &L, const matrix &b)
 	if (L.rows() != L.columns() || L.columns() != b.rows() || b.columns() != 1)
 		throw std::runtime_error("forward supstitution error");
 
-	matrix y = b;
+	auto y = b;
 
 	for (auto i = 0; i != y.rows() - 1; ++i)
 		for (auto j = i + 1; j != y.rows(); ++j)
@@ -297,7 +293,7 @@ matrix backward_supstitution(const matrix &U, const matrix &y)
 	if (U.rows() != U.columns() || U.columns() != y.rows() || y.columns() != 1)
 		throw std::runtime_error("backward supstitution error");
 
-	matrix x = y;
+	auto x = y;
 
 	for (auto i = x.rows() - 1; i >= 0; --i)
 	{

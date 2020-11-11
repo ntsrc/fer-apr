@@ -13,7 +13,6 @@ namespace apr
 
 class matrix
 {
-	
 public:
 	using value_type = double;
 	using size_type = std::vector<value_type>::size_type;
@@ -23,7 +22,7 @@ public:
 	friend bool operator==(const matrix &, const matrix &);
 	friend bool operator!=(const matrix &, const matrix &);
 
-	matrix(size_type rows, size_type cols) : rows_(rows), cols_(cols), elem_(rows*cols)
+	matrix(size_type rows, size_type cols) : rows_(rows), cols_(cols), elem_(rows * cols)
 	{}
 	explicit matrix(size_type dim) : matrix(dim, dim)
 	{}
