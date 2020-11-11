@@ -28,7 +28,8 @@ public:
 	{}
 
 	explicit matrix(const char *);
-	explicit matrix(const std::string &);
+	explicit matrix(const std::string &fn) : matrix(fn.c_str())
+	{}
 
 	matrix(const matrix &) = default;
 	matrix &operator=(const matrix &) = default;
