@@ -45,7 +45,7 @@ public:
 	{ return cols_; }
 
 	auto idx(size_type row, size_type col) const
-	{return row * rows_ + col; }
+	{ return row * cols_ + col; }
 
 	auto operator()(size_type row, size_type col) const
 	{ return elem_[idx(row, col)]; }
@@ -93,9 +93,9 @@ matrix operator-(const matrix &, const matrix &);
 matrix operator*(const matrix &, const matrix &);
 
 matrix operator*(matrix::value_type, const matrix &);
-inline matrix operator*(const matrix &m, matrix::value_type v)
+inline auto operator*(const matrix &m, matrix::value_type v)
 { return v * m; }
-inline matrix operator-(const matrix &m)
+inline auto operator-(const matrix &m)
 { return -1.0 * m; }
 
 matrix LU_decomposition(const matrix &);
