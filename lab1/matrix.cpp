@@ -4,6 +4,7 @@
 #include <sstream>
 #include <functional>
 #include <iterator>
+#include <cstddef>
 
 namespace apr
 {
@@ -295,7 +296,7 @@ matrix backward_supstitution(const matrix &U, const matrix &y)
 
 	auto x = y;
 
-	for (auto i = x.rows() - 1; i >= 0; --i)
+	for (ssize_t i = x.rows() - 1; i >= 0; --i)
 	{
 		if (std::abs(U(i,i)) < matrix::eps)
 			throw std::runtime_error("backward supstitution error");
